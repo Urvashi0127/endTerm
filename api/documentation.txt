@@ -1,0 +1,522 @@
+1. npm init -y
+2. npm i express
+3. create an index.js file
+
+    -> package.json
+        // to use import function write the following in package.json
+
+        "type":"module"
+    -> index.js
+        import express from "express"
+        const app = express()
+        
+        app.listen(8800,()=>{
+            console.log("Server started at port : 8800");
+        })
+
+    -> package.json
+        "scripts":{
+        "start": "node index.js"   
+        } 
+
+4. go to mongodb cluster and click connect
+    - choose connect application and copy link
+    - change the <password> to your password in link and after "mongodb.net/" give a database name in our case its "booking"
+
+5. hide the link in an .env file 
+    - install dotenv 'npm i dotenv'
+    
+    -> index.js
+        import dotenv from "dotenv"
+        dotenv.config()
+
+    const connect = async()=>{
+
+    try{
+    mongoose.connect(process.env.MONGO);
+        console.log("Connected to mongoDB")
+    }catch (error)
+    {
+        throw(error);
+    };
+}    
+
+6. npm i mongoose
+    ->index.js
+    import mongoose from "mongoose"
+
+7. -> index.js  
+
+        //write mongoose boilerplate code to connect 
+
+                 const connect = async()=>{
+
+                        try{
+                        mongoose.connect("mongodb+srv://booking:booking@booking.ftmidkw.mongodb.net/?retryWrites=true&w=majority");
+                            console.log("Connected to mongoDB")
+                        }catch (error)
+                        {
+                            throw(error);
+                        };
+                    }
+
+        // disconnection and connection 
+                    mongoose.connection.on("disconnected", ()=>{
+                        console.log("mongoDB disconnected")
+                    })
+                    mongoose.connection.on("connected", ()=>{
+                        console.log("mongoDB connected")
+                    })
+
+8. in case of authentication problem check ip adress in Atlas
+
+9. create models(schemas) folder in the main 'api' folder
+
+10. Hotel.js (Hotel schema) 
+
+       -> Hotel.js 
+
+                import mongoose from "mongoose"
+
+                // const {Schema} = mongoose;
+
+                const HotelSchema = new mongoose.Schema({
+
+                    name:{            // Properties and types
+                        type:String,
+                        required:true // Mandatory
+                    },
+                    type:{            
+                        type:String,
+                        reqruied:true
+                    },
+                    city:{
+                        type:String,
+                        reqruied:true
+                    },
+                    address:{
+                        type:String,
+                        required:true
+                    },
+                    distance:{
+                        type:String,
+                        required:true
+                    },
+                    photos:{
+                        type: [String]
+                    },
+                    desc:{
+                        type:String,
+                        required:true
+                    },
+                    rating:{
+                        type:Number,
+                        min:0,
+                        max:5
+                    },
+                    rooms:{
+                        type:[String],
+                        
+                    },
+                    cheapestPrice:{
+                        type:Number,
+                        required:true,
+                    },
+                    featured:{
+                        type:Boolean,
+                        default:false,
+                    },
+
+                })
+
+                export default mongoose.model("Hotel",HotelSchema)
+
+
+11. Now create a seperate 'routes' folder in the manin 'api' folder
+    - create hotels.js 'route'
+    - import express, import Hotel from "../models/Hotels.js"
+    - create a CRUD api in the 'hotels; route
+
+    -> hotels.js 
+
+        const router = express.Router();
+
+        // CREATE
+        router.post("/",async(req,res)=>{
+
+            const newHotel = new Hotel(req.body)
+            try{
+                const savedHotel = await newHotel.save()
+                res.status(200).json(savedHotel)
+            }catch(err)
+            {
+                res.status(500).json(err)
+            }
+        })
+
+
+        // UPDATE 
+
+        router.put("/:id",async(req,res)=>{
+            try{
+                // const updateHotel = await Hotel.findByIdAndUpdate(req.params.id,{$set:req.body})  this won't update the table in json but will do to ATLAS
+                const updateHotel = await Hotel.findByIdAndUpdate(req.params.id,{$set:req.body},{new:true})
+
+                res.status(200).json(updateHotel);
+            }
+            catch (err){
+                res.status(500).json(err);
+            }
+        })
+
+        // DELETE 
+
+        router.delete("/:id",async(req,res)=>{
+            try{
+                await Hotel.findByIdAndDelete(
+                    req.params.id
+                );
+                res.status(200).json("Hotel has been deleted")
+            }
+            catch(err)
+            {
+                res.status(500).json(err);
+            }
+        });
+
+        // GET 
+
+        router.get("/:id",async(req,res)=>{
+            try{
+                const hotel = await Hotel.findById(
+                    req.params.id
+        );
+                res.status(200).json(hotel);
+            }catch(err)
+            {
+                res.status(500).json(err);
+            }
+        })
+
+        // GET ALL
+
+        router.get("/",async(req,res)=>{
+
+            console.log("Hi I am a hotel route")
+            try{
+                const hotels = await Hotel.find();
+                res.status(200).json(hotels);
+            }catch(err)
+            {
+                res.status(500).json(err);
+            }
+        })
+
+        export default router;
+
+
+12. install 'Insomnia' create https requests there
+
+        - create hotel = localhost:8800/api/hotels/
+
+            {
+		"_id": "63e88676f6858d9003bc9bfe",
+		"name": "Hotel Radha",
+		"type": "hotel",
+		"city": "Barsana",
+		"address": "somewhere",
+		"distance": "500",
+		"photos": [],
+		"desc": "hotel description",
+		"rooms": [],
+		"cheapestPrice": 100,
+		"featured": false,
+		"__v": 0
+	}
+        
+        
+        - get hotel = localhost:8800/api/hotels/'type id here'
+
+        - get all hotel = localhost:8800/api/hotels/
+
+        - update hotel - localhost:8800/api/hotels/'type id here'
+
+            -   {
+                "name":"Vibhu",
+                "city":"Ambala
+            }
+
+        - delete hotel -localhost:8800/api/hotels/'type id here'
+
+
+
+13. Understanding Middlewares
+
+
+        Middlewarers - its able to reach our requests and response before sending anything to user
+
+        -> index.js
+
+
+            app.use(req,res,next)=>{
+                console.log("Hi, I am a middleware!")
+            }
+
+        -> hotels.js  
+
+            under route 'GET ALL' function
+
+            insert 'next();'
+
+
+                // GET ALL
+
+                router.get("/",async(req,res)=>{
+
+                    console.log("Hi I am a hotel route")
+--------------->    next(); 
+                    try{
+                        const hotels = await Hotel.find();
+                        res.status(200).json(hotels);
+                    }catch(err)
+                    {
+                        res.status(500).json(err);
+                    }
+                })
+
+
+
+
+         On API call from user(from Insomnia/Postman), express looks for a middle ware
+
+        1. app.use(express.json) verifies you can you body
+        2. app.use(/api/hotel) is the called api route
+        3. under called route if there is 'next()' command then 
+            express will move to next middleware which is 
+            app.use(req,res,next)  
+
+
+          api call -> expres.json -> route middleware -> next middleware
+
+
+     If I replace "console.log("Hi, I am a middleware!")" in the middleware with "res.send("Hello, I am middleware")
+     Then the api call will not return the hotels but the res.send("") will be sent.
+
+    // app will crash because route will call next(), and middle ware will send response, then route's response will be left over.
+    // Therefore, use return next() in 'GET ALL' route.
+
+
+14.  Error Handling
+
+
+    -> index.js
+        app.use((err,req,res,next)=>
+        {
+           return res.status(500).json("Hi I am middleware.")
+        })
+
+    -> hotels.js
+
+    // replace this
+        catch(err)
+        {
+            res.status(500).json(err);
+
+        }
+
+    //  with     
+            catch(err){
+
+                next(err)
+            }   
+
+
+    2nd State -> 
+
+    app.use((err,req,res,next)=>
+        {   
+            const errorStatus = err.status || 500
+            const errorMessage = err.message || "Something went wrong!"
+            
+            
+            return    res.status(500).json(err);
+            
+                 or
+            res.status(500).json("Error from handler")       customized error
+                    or
+            res.status(errorStatus).json({
+                 success:false,
+                 status:errorStatus,
+                 message:errorMessage,
+                 stack:err.stack,
+
+            })       customized error
+  // Customized err
+        })
+
+
+    3rd State ->
+
+        const failed = true;
+        
+        if(failed) return next(createError(401,"You are not authenticated."));
+
+    Create another folder named 'utils' and inside it make and 'error.js' file
+
+    -> error.js 
+
+            const createError =  (status, message)=>{
+
+
+                const err = new Error();
+                err.status = status,
+                err.message = message
+
+                return err;
+            }
+
+
+            export default createError
+
+
+15. Create a Controllers folder in the 'api' directory
+
+    now creaet 'Hotels.js'
+    and transfer each operation as a function
+
+
+16. Authentication 
+
+    create a auth.js file in controllers directory
+    
+
+    -> models/Users.js
+
+                import mongoose from "mongoose";
+                const UserSchema = new mongoose.Schema(
+                {
+                    username: {
+                    type: String,
+                    required: true,
+                    unique: true,
+                    },
+                    email: {
+                    type: String,
+                    required: true,
+                    unique: true,
+                    },
+                    password: {
+                    type: String,
+                    required: true,
+                    },
+                    isAdmin: {
+                    type: Boolean,
+                    default: false,
+                    },
+                },
+                { timestamps: true }
+                );
+
+                export default mongoose.model("User", UserSchema);
+
+    -> auth.js
+
+            import User from "../models/Users.js"
+
+            export const register = async(req,res,next)=>{
+
+                try{
+                    const newUser = new User({
+                        username:req.body.username,
+                        email:req.body.email,
+                        password:req.body.password,
+                    })
+
+                    await newUser.save();
+                    res.status(200).send("User has been created.")
+                }catch(err)
+                {
+                    next(err)
+                }
+
+            }
+
+    -> routes/auth.js 
+
+            import express from "express"
+            import {register} from "../controllers/auth.js"
+
+            const router = express.Router();
+
+            router.post("/register",register)
+
+            export default router
+
+16.  npm i bcryptjs
+
+
+        -> /controllers/auth.js
+
+                const salt = bcrypt.genSaltSync(10);
+                const hash = bcrypt.hashSync(req.body.password,salt)
+
+                password:hash,
+    
+
+17. Create a Login api in Controller/auth.js
+
+        -> auth.js
+
+            
+            export const login = async(req,res,next)=>{
+
+                try{
+                    const user = await  User.findOne({username:req.body.username})
+                    if(!user) return next(createError(404,"User not found!"))
+
+                    const isPasswordCorrect = await bcrypt.compare(
+                        req.body.password, 
+                        user.password)
+
+                    if(!isPasswordCorrect) 
+                    return next(createError(400,"Wrong password or username!"))
+                        
+                    const {password,isAdmin,...otherDetails}=user._doc;
+
+                    res.status(200).json({...otherDetails});
+                }catch(err)
+                {
+                    next(err)
+                }
+
+            }
+
+
+
+
+
+-----------------------------------------------------------------------------------------
+
+// Rememeber
+
+500 - server error
+200 - successful
+The try statement defines a code block to run (to try).
+
+The catch statement defines a code block to handle any error.
+            try {
+            Block of code to try
+            }
+            catch(err) {
+            Block of code to handle errors
+            }
+
+The finally statement defines a code block to run regardless of the result.
+
+The throw statement defines a custom error.
+
+"async and await make promises easier to write"
+
+async makes a function return a Promise
+
+await makes a function wait for a Promise
